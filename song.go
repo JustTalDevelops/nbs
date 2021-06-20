@@ -36,16 +36,16 @@ func (s *Song) Play() {
 
 	for {
 		if !s.played {
-			return
+			break
 		}
 
-		if time.Now().UnixNano() / int64(time.Millisecond) - lastPlayed < int64(50 * s.Delay()) {
+		if time.Now().UnixNano()/int64(time.Millisecond)-lastPlayed < int64(50*s.Delay()) {
 			continue
 		}
 
 		tick++
 		if tick > s.Length {
-			return
+			break
 		}
 
 		// Play each note in each layer.
@@ -64,6 +64,8 @@ func (s *Song) Play() {
 
 		time.Sleep(20 * time.Millisecond)
 	}
+
+	s.played = false
 }
 
 // Player attaches a new player to the song. This doesn't play the song automatically.
