@@ -1,6 +1,9 @@
 package nbs
 
-import "time"
+import (
+	"go.uber.org/atomic"
+	"time"
+)
 
 // Song is a decoded NBS song.
 type Song struct {
@@ -20,28 +23,28 @@ type Song struct {
 	Speed float32
 	// player is the player attached to the song.
 	player Player
-	// stopPlaying stops playing on the next tick.
-	stopPlaying bool
 	// played is true if the song is being played.
-	played bool
+	played atomic.Bool
+	// paused is true if the song is currently paused.
+	paused atomic.Bool
 }
 
 // Play starts playing the song. It will not do anything if the song is already being played.
 func (s *Song) Play() {
-	if s.played || s.player == nil {
+	if s.played.Load() || s.player == nil {
 		return
 	}
 
-	s.played = true
+	s.played.Store(true)
 
 	var lastPlayed, tick int64
-
 	for {
-		if !s.played || s.stopPlaying {
+		if !s.played.Load() {
 			break
 		}
 
-		if time.Now().UnixNano()/int64(time.Millisecond)-lastPlayed < int64(50*s.Delay()) {
+		notReadyForNextNote := time.Now().UnixNano()/int64(time.Millisecond)-lastPlayed < int64(50*s.Delay())
+		if s.paused.Load() || notReadyForNextNote {
 			continue
 		}
 
@@ -67,13 +70,19 @@ func (s *Song) Play() {
 		time.Sleep(20 * time.Millisecond)
 	}
 
-	s.stopPlaying = false
-	s.played = false
+	s.played.Store(false)
+	s.paused.Store(false)
 }
 
 // Stop stops playing the song that is currently playing.
 func (s *Song) Stop() {
-	s.stopPlaying = true
+	s.played.Store(false)
+}
+
+// Pause toggles the pause boolean. If the song is already paused, then it will resume the song. Otherwise, it will
+// pause the song and no new notes will be played.
+func (s *Song) Pause() {
+	s.paused.Toggle()
 }
 
 // Player attaches a new player to the song. This doesn't play the song automatically.
