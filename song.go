@@ -20,6 +20,8 @@ type Song struct {
 	Speed float32
 	// player is the player attached to the song.
 	player Player
+	// stopPlaying stops playing on the next tick.
+	stopPlaying bool
 	// played is true if the song is being played.
 	played bool
 }
@@ -35,7 +37,7 @@ func (s *Song) Play() {
 	var lastPlayed, tick int64
 
 	for {
-		if !s.played {
+		if !s.played || s.stopPlaying {
 			break
 		}
 
@@ -65,7 +67,13 @@ func (s *Song) Play() {
 		time.Sleep(20 * time.Millisecond)
 	}
 
+	s.stopPlaying = false
 	s.played = false
+}
+
+// Stop stops playing the song that is currently playing.
+func (s *Song) Stop() {
+	s.stopPlaying = true
 }
 
 // Player attaches a new player to the song. This doesn't play the song automatically.
