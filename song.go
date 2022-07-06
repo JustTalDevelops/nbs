@@ -1,11 +1,7 @@
 package nbs
 
-import (
-	"go.uber.org/atomic"
-	"time"
-)
-
-// Song is a decoded NBS song.
+// Song is a decoded NBS song. A Song may be re-used safely by calling Play for every individual instance of a song
+// being played.
 type Song struct {
 	// Title is the title of the NBS song.
 	Title string
@@ -21,76 +17,17 @@ type Song struct {
 	SongHeight int16
 	// Speed is the speed of the song.
 	Speed float32
-	// player is the player attached to the song.
-	player Player
-	// played is true if the song is being played.
-	played atomic.Bool
-	// paused is true if the song is currently paused.
-	paused atomic.Bool
 }
 
-// Play starts playing the song. It will not do anything if the song is already being played.
-func (s *Song) Play() {
-	if s.played.Load() || s.player == nil {
-		return
+// Play creates a new Player for the Song and starts it.
+func (s *Song) Play() *Player {
+	c := make(chan Note)
+	p := &Player{
+		C:      c,
+		layers: s.Layers,
+		length: s.Length,
+		speed:  s.Speed,
 	}
-
-	s.played.Store(true)
-
-	var lastPlayed, tick int64
-	for {
-		if !s.played.Load() {
-			break
-		}
-
-		notReadyForNextNote := time.Now().UnixNano()/int64(time.Millisecond)-lastPlayed < int64(50*s.Delay())
-		if s.paused.Load() || notReadyForNextNote {
-			continue
-		}
-
-		tick++
-		if tick > s.Length {
-			break
-		}
-
-		// Play each note in each layer.
-		for _, l := range s.Layers {
-			note, ok := l.Note(tick)
-			if !ok {
-				continue
-			}
-
-			// Send the note to the attached player.
-			s.player.Play(s, note)
-		}
-
-		// Update the last played time.
-		lastPlayed = time.Now().UnixNano() / int64(time.Millisecond)
-
-		time.Sleep(20 * time.Millisecond)
-	}
-
-	s.played.Store(false)
-	s.paused.Store(false)
-}
-
-// Stop stops playing the song that is currently playing.
-func (s *Song) Stop() {
-	s.played.Store(false)
-}
-
-// Pause toggles the pause boolean. If the song is already paused, then it will resume the song. Otherwise, it will
-// pause the song and no new notes will be played.
-func (s *Song) Pause() {
-	s.paused.Toggle()
-}
-
-// Player attaches a new player to the song. This doesn't play the song automatically.
-func (s *Song) Player(player Player) {
-	s.player = player
-}
-
-// Delay is the tick delay which is calculated using the speed.
-func (s *Song) Delay() float32 {
-	return 20 / s.Speed
+	p.run(c)
+	return p
 }
