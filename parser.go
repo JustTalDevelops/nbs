@@ -5,17 +5,27 @@ import (
 	"os"
 )
 
-// Parse parses a NBS file.
-func Parse(file string) (*Song, error) {
-	data, err := os.ReadFile(file)
+// MustReadFile reads and parses an NBS file and returns a Song that may be played using Song.Play. It panics if an
+// error occurred during reading.
+func MustReadFile(file string) Song {
+	song, err := ReadFile(file)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	return ParseBuf(bytes.NewBuffer(data))
+	return song
 }
 
-// ParseBuf reads NBS data from a buffer.
-func ParseBuf(buf *bytes.Buffer) (*Song, error) {
+// ReadFile reads and parses an NBS file and returns a Song that may be played using Song.Play.
+func ReadFile(file string) (Song, error) {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return Song{}, err
+	}
+	return Read(bytes.NewBuffer(data))
+}
+
+// Read reads NBS data from a buffer and returns a Song that may be played using Song.Play.
+func Read(buf *bytes.Buffer) (Song, error) {
 	layers := make(map[int16]*Layer)
 
 	length, err := readShort(buf)
@@ -168,8 +178,8 @@ func ParseBuf(buf *bytes.Buffer) (*Song, error) {
 			}
 
 			l.SetNote(int64(tick), Note{
-				Instrument: instrument,
-				Key: key,
+				Instrument: Instrument(instrument),
+				Key:        int(key),
 			})
 		}
 	}
@@ -186,7 +196,7 @@ func ParseBuf(buf *bytes.Buffer) (*Song, error) {
 				panic(err)
 			}
 			if nbsVersion >= 4 {
-				buf.ReadByte()
+				_, _ = buf.ReadByte()
 			}
 
 			l.Volume, err = buf.ReadByte()
@@ -194,14 +204,14 @@ func ParseBuf(buf *bytes.Buffer) (*Song, error) {
 				panic(err)
 			}
 			if nbsVersion >= 2 {
-				buf.ReadByte()
+				_, _ = buf.ReadByte()
 			}
 		}
 	}
 
 	speed := float32(rawSpeed) / 100
 
-	return &Song{
+	return Song{
 		Title:       title,
 		Description: description,
 		Author:      author,
