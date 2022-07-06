@@ -20,7 +20,7 @@ type Song struct {
 }
 
 // Play creates a new Player for the Song and starts it.
-func (s *Song) Play() *Player {
+func (s Song) Play() *Player {
 	c := make(chan Note)
 	p := &Player{
 		C:      c,
