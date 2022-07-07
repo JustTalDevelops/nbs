@@ -1,7 +1,7 @@
 package nbs
 
 import (
-	"github.com/df-mc/dragonfly/server/block/instrument"
+	"github.com/df-mc/dragonfly/server/world/sound"
 	"strconv"
 )
 
@@ -9,40 +9,40 @@ import (
 type Instrument int
 
 // instrument converts an Instrument to its representation in Dragonfly.
-func (i Instrument) instrument() instrument.Instrument {
+func (i Instrument) instrument() sound.Instrument {
 	switch i {
 	case InstrumentHarp:
-		return instrument.Piano()
+		return sound.Piano()
 	case InstrumentBass:
-		return instrument.Bass()
+		return sound.Bass()
 	case InstrumentBassDrum:
-		return instrument.BassDrum()
+		return sound.BassDrum()
 	case InstrumentSnare:
-		return instrument.Snare()
+		return sound.Snare()
 	case InstrumentHat:
-		return instrument.ClicksAndSticks()
+		return sound.ClicksAndSticks()
 	case InstrumentGuitar:
-		return instrument.Guitar()
+		return sound.Guitar()
 	case InstrumentFlute:
-		return instrument.Flute()
+		return sound.Flute()
 	case InstrumentBell:
-		return instrument.Bell()
+		return sound.Bell()
 	case InstrumentChime:
-		return instrument.Chimes()
+		return sound.Chimes()
 	case InstrumentXylophone:
-		return instrument.Xylophone()
+		return sound.Xylophone()
 	case InstrumentIronXylophone:
-		return instrument.IronXylophone()
+		return sound.IronXylophone()
 	case InstrumentCowBell:
-		return instrument.CowBell()
+		return sound.CowBell()
 	case InstrumentDidgeridoo:
-		return instrument.Didgeridoo()
+		return sound.Didgeridoo()
 	case InstrumentBit:
-		return instrument.Bit()
+		return sound.Bit()
 	case InstrumentBanjo:
-		return instrument.Banjo()
+		return sound.Banjo()
 	case InstrumentPling:
-		return instrument.Pling()
+		return sound.Pling()
 	}
 	panic("unsupported instrument type " + strconv.Itoa(int(i)))
 }
