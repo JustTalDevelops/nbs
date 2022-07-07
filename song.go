@@ -28,6 +28,6 @@ func (s Song) Play() *Player {
 		length: s.Length,
 		speed:  s.Speed,
 	}
-	p.run(c)
+	go p.run(c)
 	return p
 }
