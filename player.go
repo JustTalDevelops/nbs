@@ -41,20 +41,16 @@ func (p *Player) Pause() {
 
 // run starts running the Player, submitting new Notes to the channel passed.
 func (p *Player) run(c chan Note) {
-	var lastPlayed, tick int64
+	tick := int64(0)
+	ticker := time.NewTicker(time.Duration(float64(time.Second) / float64(p.speed)))
+	defer ticker.Stop()
 	defer close(c)
-	for {
-		if p.stopped.Load() {
-			return
-		}
 
-		notReadyForNextNote := time.Now().UnixNano()/int64(time.Millisecond)-lastPlayed < int64(50*(20/p.speed))
-		if p.paused.Load() || notReadyForNextNote {
+	for range ticker.C {
+		if tick > p.length || p.stopped.Load() {
+			return
+		} else if p.paused.Load() {
 			continue
-		}
-
-		if tick++; tick > p.length {
-			return
 		}
 
 		// Play each note in each layer.
@@ -65,10 +61,6 @@ func (p *Player) run(c chan Note) {
 			}
 			c <- note
 		}
-
-		// Update the last played time.
-		lastPlayed = time.Now().UnixNano() / int64(time.Millisecond)
-
-		time.Sleep(20 * time.Millisecond)
+		tick++
 	}
 }
